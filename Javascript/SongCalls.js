@@ -321,3 +321,10 @@ export async function searchSong(songName, artistName) {
 
     return await searchSongResponse.json();
 }
+
+export async function readCSVFile(csvFile) {
+    const input = csvFile.files[0];
+    const reader = new FileReader();
+    reader.readAsText(input);
+    console.log(input);
+}

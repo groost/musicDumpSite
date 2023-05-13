@@ -72,9 +72,17 @@
                     <br>
                     <br>
 
+                    <fieldset>
+                        <legend>Read CSV Files to Database</legend>
+
+                        <input type="file" id="csvFileInput" accept=".csv">
+                        <button type="submit" id="csvFileButton">Submit File</button>
+                    </fieldset>
+
+                    
                     <script type="module">
                         import { findArtistGenre } from './Javascript/GenreCalls.js';
-                        import { getSongRecs, getSongDetails } from './Javascript/SongCalls.js';
+                        import { getSongRecs, getSongDetails, getCSVFile } from './Javascript/SongCalls.js';
                         import { getArtistsAlbums, addAlbums, getAlbumIDs } from './Javascript/AlbumCalls.js';
                         import { exportToCSV } from "./Javascript/MainCalls.js";
 
@@ -115,6 +123,10 @@
                             populateSongRecs();
                         });
 
+                        document.querySelector('#csvFileButton').addEventListener('click', () => {
+                            getCSVFile(document.getElementById('csvFileInput').value);
+                        });
+
                         async function sleep(ms) {
                             return new Promise(resolve => setTimeout(resolve, ms));
                         }
@@ -153,7 +165,9 @@
                             artistNamesList = [];
                         }
 
-                        
+                        async function readCSVFile() {
+
+                        }
                     </script>
                 </div>
 

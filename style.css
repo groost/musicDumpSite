@@ -1,0 +1,58 @@
+.container {
+    margin-right: auto;
+    margin-left: auto;
+    padding-left: 15px;
+    padding-right: 15px;
+    *zoom: 1; 
+    background-color: cadetblue;
+}
+
+table, th, td {
+    font-size: 15pt;
+    text-align: center;
+    color: springgreen;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+button {
+    background-color: green;
+    border-radius: 10px;
+    color:  springgreen;
+}
+
+fieldset {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+label, legend {
+    color: springgreen;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background-color: cadetblue;
+}
+
+li a {
+    display: block;
+    color: springgreen;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+  }
+
+img {
+    width: 200px;
+    height: 200px;
+}
+
+body {
+    background-color: cadetblue;
+}
