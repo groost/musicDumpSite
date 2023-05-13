@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Music Recommendation Website</title>
+        <meta charset="utf-8">
+        <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+
+        <link href="http://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,700,900" rel="stylesheet" type="text/css">
+		<!-- Loading main css file -->
+		<link rel="stylesheet" href="style.css">
+        
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0,maximum-scale=1">
+
+    </head>
+    
+    <body>
+        <div id="site-content">
+            <header class="site-header">
+                <nav class="main-navigation">
+                    <ul class="menu">            
+                        <li class="menu-item"><a href="index.html">Home</a></li>
+                        <li class="menu-item"><a href="AlbumRecommendations.html">Albums</a></li>
+                        <li class="menu-item current-menu-item"><a href="SongRecommendations.html">Songs</a></li>
+                        <li class="menu-item"><a href="ArtistRecommendations.html">Artists</a></li>
+                        <li class="menu-item"><a href="Playlists.html">Playlists</a></li>
+                    </ul>
+                </nav>
+            </header>
+        </div>
+
+        <br>
+        <div class="hero">
+            <div class="fullwidth-block testimonial-section">
+                <div class="container">
+                    <fieldset>
+                        <legend>Spotify Similar Songs Input</legend>
+                        
+                        <label type="text">Enter Song and Artist of that Song: </label>
+                        <input type="text" id="similarSongName">
+                        <input type="text" id="similarSongArtistName">
+                        <button type="submit" id="similarSongNameButton">Submit Song to List</button>
+                        <br>
+                        
+                        <label type="text">Enter Only Artist: </label>
+                        <input type="text" id="similarArtistName">
+                        <button type="text" id="similarArtistNameButton">Submit Artist to List</button>
+                        <br>
+                        
+                        <label type="text">Enter Genre (be specific): </label>
+                        <input type="text" id="similarGenreName">
+                        <button type="text" id="similarGenreNameButton">Submit Genre to List</button>
+                        <br>
+                        
+                        <button type="submit" id="similarSongsButton">Search similar songs</button>
+                    </fieldset>
+                    
+                    <fieldset>
+                        <legend>Spotify Similar Songs Results</legend>
+
+                        <table id="similarSongsResult" name="similarSongsResult">
+                            <tr>
+                                <th>Song Name</th>
+                                <th>Artist Name</th>
+                                <th>Preview</th>
+                                <th>Album Art/Spotify Link</th>
+                            </tr>
+                        </table>
+                    </fieldset>
+
+                    <br>
+                    <br>
+
+                    <script type="module">
+                        import { findArtistGenre } from './Javascript/GenreCalls.js';
+                        import { getSongRecs, getSongDetails } from './Javascript/SongCalls.js';
+                        import { getArtistsAlbums, addAlbums, getAlbumIDs } from './Javascript/AlbumCalls.js';
+                        import { exportToCSV } from "./Javascript/MainCalls.js";
+
+                        var songNamesList = [];
+                        var artistNamesList = [];
+                        var genreNamesList = "";
+                        var filename = "./dumpSongs.csv";
+
+                        document.querySelector('#similarSongNameButton').addEventListener('click', () => {
+                            if(songNamesList.length + artistNamesList.length + genreNamesList.length < 5) {
+                                songNamesList.push([document.getElementById('similarSongName').value, document.getElementById('similarSongArtistName').value]);
+                                console.log(songNamesList);
+                            }
+                            else {
+                                document.getElementById('similarSongsResult').innerHTML += "\nTOO MUCH INPUT IN LIST, JUST RUN IT BUDDY!";
+                            }
+                        });
+                        document.querySelector('#similarArtistNameButton').addEventListener('click', () => {
+                            if(songNamesList.length + artistNamesList.length + genreNamesList.length < 5) {
+                                artistNamesList.push(document.getElementById('similarArtistName').value);
+                                console.log(artistNamesList);
+                            }
+                            else {
+                                document.getElementById('similarSongsResult').innerHTML += "\nTOO MUCH INPUT IN LIST, JUST RUN IT BUDDY!";
+                            }
+                        });
+                        document.querySelector('#similarGenreNameButton').addEventListener('click', () => {
+                            if(songNamesList.length + artistNamesList.length < 10000) {
+                                genreNamesList += document.getElementById('similarGenreName').value + ",";
+                                console.log(genreNamesList);
+                            }
+                            else {
+                                document.getElementById('similarSongsResult').innerHTML += "\nTOO MUCH INPUT IN LIST, JUST RUN IT BUDDY!";
+                            }
+                        });
+
+                        document.querySelector('#similarSongsButton').addEventListener('click', () => {
+                            populateSongRecs();
+                        });
+
+                        async function sleep(ms) {
+                            return new Promise(resolve => setTimeout(resolve, ms));
+                        }
+                        
+                        async function populateSongRecs() {
+                                
+                            await sleep(500);
+                            
+                            var songRecData = await getSongRecs(songNamesList, artistNamesList, genreNamesList);
+                            songRecData = songRecData['tracks'];
+
+                            var tbl = document.querySelector("#similarSongsResult tbody");
+
+                            for(var j = 0; j < songRecData.length; j++)
+                                tbl.innerHTML += "<tr><td>" + songRecData[j]['name'] + "</td><td>" + songRecData[j]['artists'][0]['name'] + "</td><td><iframe src=\"" + songRecData[j]['preview_url'] + "\">Preview</iframe></td><td><a href=\"" + songRecData[j]['external_urls']['spotify'] + "\"> <img width=\"200\" height=\"200\" src=\"" + songRecData[j]['album']['images'][0]['url'] + "\" alt=\"Album Art\"> </a></td></tr>";
+                            
+                            var data = [];
+                            for(var j = 0; j < songRecData.length; j++) {
+                                console.log("Progress through song Recs: " + (1.0 * j / songRecData.length * 100));
+                                await sleep(500);
+                                
+                                var albumIDs = getAlbumIDs(await getArtistsAlbums(songRecData[j]['artists'][0]['name']));
+                                
+                                await sleep(500);
+                                
+                                data.push(...await addAlbums(albumIDs));
+                            }
+
+                            console.log("data output: ");
+                            console.log(data);
+
+                            exportToCSV(filename, data);
+
+                            songNamesList = [];
+                            genreNamesList = [];
+                            artistNamesList = [];
+                        }
+
+                        
+                    </script>
+                </div>
+
+            </div>
+        </div>
+    </body>
+</html>

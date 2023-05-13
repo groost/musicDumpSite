@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Music Recommendation Website</title>
+        <meta charset="utf-8">
+        <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+
+        <link href="http://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,700,900" rel="stylesheet" type="text/css">
+		<!-- Loading main css file -->
+		<link rel="stylesheet" href="style.css">
+        
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0,maximum-scale=1">
+
+    </head>
+    
+    <body>
+        <div id="site-content">
+            <header class="site-header">
+                <nav class="main-navigation">
+                    <ul class="menu">            
+                        <li class="menu-item"><a href="index.html">Home</a></li>
+                        <li class="menu-item"><a href="AlbumRecommendations.html">Albums</a></li>
+                        <li class="menu-item"><a href="SongRecommendations.html">Songs</a></li>
+                        <li class="menu-item"><a href="ArtistRecommendations.html">Artists</a></li>
+                        <li class="menu-item current-menu-item"><a href="Playlists.html">Playlists</a></li>
+                    </ul>
+                </nav>
+            </header>
+        </div>
+
+        <br>
+
+        <div class="hero">
+            <div class="fullwidth-block testimonial-section">
+                <div class="container">
+                    <fieldset>
+                        <legend>Playlist Input</legend>
+                        <label type="text">Enter User to search their playlists: </label>
+                        <input type="text" id="userSearchInput">
+                        <br>
+                        <label type="text">Or, Enter playlistID: </label>
+                        <input type="text" id="playlistIDSearch">
+                        <br>
+                        <button type="submit" id="userSearchButton">Search User</button>
+                    </fieldset>
+                    
+                    <fieldset>
+                        <legend>Playlist Results</legend>
+                        <table id="playlistResults">
+                            <tr>
+                                <th>Song Name</th>
+                                <th>Artist Name</th>
+                                <th>Album Art/Spotify Link</th>
+                            </tr>
+                        </table>
+                    </fieldset>
+
+                    <script type="module">
+                        import {getArtistsAlbums, getAlbumTracks, addAlbums, getAlbumIDs } from './Javascript/AlbumCalls.js';
+                        import { findArtistGenre } from './Javascript/GenreCalls.js';
+                        import { getSongID, getSongDetails, getUsersPlaylists, getPlaylist } from './Javascript/SongCalls.js';
+                        import { exportToCSV, sleep } from "./Javascript/MainCalls.js";
+
+                        document.querySelector('#userSearchButton').addEventListener('click', () => {
+                            readUserPlaylistsMain(document.getElementById('playlistIDSearch').value.length > 0 ? "playlist:" + document.getElementById('playlistIDSearch').value : "User:" + document.getElementById('userSearchInput').value);
+                        });
+
+                        async function readUserPlaylistsMain(userID) {
+                            var table = document.querySelector("#playlistResults tbody");
+                            userID = userID.split(":");
+
+                            var data = [];
+
+                            if(userID[0] === "User") {
+                                var playlistData = await getUsersPlaylists(userID[1]);
+                                console.log(playlistData);
+                                var i;
+                                for(i = 0; i < playlistData.length; i++) {
+                                    await sleep(1000);
+                                    console.log("Progess through playlists: " + (i * 1.0 / playlistData.length * 100));
+                                    const pData = await getPlaylist(playlistData[i]);
+
+                                    for(var a of pData[0]) {
+                                        table.innerHTML += "<tr><td>" + a[0] + "</td><td>" + a[1] + "</td> <td> <a href=\"" + a[2] + "\"><img src=\"" + a[3] + "\" alt=\"Album Art\"> </a></td></tr>";
+                                    }
+                                    
+                                    data.push(...await addAlbums(pData[1]));
+                                }
+                            }
+                            else {
+                                const playlistData = await getPlaylist(userID[1]);
+
+                                for(var a of playlistData[0]) {
+                                    table.innerHTML += "<tr><td>" + a[0] + "</td><td>" + a[1] + "</td> <td> <a href=\"" + a[2] + "\"><img src=\"" + a[3] + "\" alt=\"Album Art\"> </a></td></tr>";
+                                }
+
+                                console.log("playlistData ouput: ");
+                                console.log(playlistData);
+
+                                data.push(...await addAlbums(playlistData[1]));
+                            }
+                            
+                            console.log("data output:");
+                            console.log(data);
+                            
+                            exportToCSV("playlist.csv", data);
+                        }
+                    </script>
+                </div>
+            </div>
+        </div>
+        <br>
+        <br>
+    </body>
+</html>

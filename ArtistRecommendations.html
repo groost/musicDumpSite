@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Music Recommendation Website</title>
+        <meta charset="utf-8">
+        <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+
+        <link href="http://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,700,900" rel="stylesheet" type="text/css">
+		<!-- Loading main css file -->
+		<link rel="stylesheet" href="style.css">
+        
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0,maximum-scale=1">
+
+    </head>
+    
+    <body>
+        <div id="site-content">
+            <header class="site-header">
+                <div class="container">
+                    <nav class="main-navigation">
+                        <ul class="menu">            
+                            <li class="menu-item"><a href="index.html">Home</a></li>
+                            <li class="menu-item"><a href="AlbumRecommendations.html">Albums</a></li>
+                            <li class="menu-item"><a href="SongRecommendations.html">Songs</a></li>
+                            <li class="menu-item current-menu-item"><a href="ArtistRecommendations.html">Artists</a></li>
+                            <li class="menu-item"><a href="Playlists.html">Playlists</a></li>
+                        </ul>
+                    </nav>
+                    
+					<div class="mobile-menu"></div>
+                </div>
+            </header>
+            
+            <script type="module">
+                import { findRelatedArtists, searchForDatabaseArtist, findArtistID } from './Javascript/ArtistCalls.js';
+                import { getSongDetails, searchSongs, searchDatabaseForSong, getMultipleSongDetails } from "./Javascript/SongCalls.js";
+                import { findArtistGenre } from './Javascript/GenreCalls.js';
+                import { getArtistsAlbums, addAlbums, getAlbumIDs } from './Javascript/AlbumCalls.js';
+                import { exportToCSV, sleep } from './Javascript/MainCalls.js';
+
+                document.querySelector('#artistSearchButton').addEventListener('click', () => {
+                    getRelatedArtists(document.getElementById('artistSearch').value);
+                });
+
+                var checkArtistResult;
+
+                async function getRelatedArtists(artistName) {
+                    artistName = [artistName];
+                    
+                    var table = document.querySelector("#searchResults tbody");
+                    for(var j = 0; j < 1 && j < artistName.length; j++) {
+                        await sleep(500).then(() => { console.log("wait time done.") });
+                        var artists;
+                        if(j === 0) {
+                            artists = await findRelatedArtists(artistName[j].split(";")[0], await findArtistID(artistName[j].split(";")[0]));
+                            artistName.pop();
+                        }
+                        else
+                            artists = await findRelatedArtists(artistName[j].split(";")[0], artistName[j].split(";")[2]);
+
+                        if(artists && artists.length > 0)
+                            console.log(artists); 
+                            for(var i = 0; i < 20 && i < artists.length; i++) {
+                                table.innerHTML += "<tr><td>" + artists[i]['name'] + "</td><td>" + (artists[i]['genres'].length != 0 ? artists[i]['genres'][0] : "undefined") + "</td><td><a href=\"" + artists[i]['external_urls']['spotify'] + "\"><img width=\"200\" height=\"200\" src=\"" + artists[i]['images'][0]['url']+ "\" alt=\"Album Art\"></a></td></tr>";
+                                artistName.push(artists[i]['name'] + ";" + artists[i]['genres'][0] + ";" + artists[i]['id']);
+                            }
+
+                        artistName = [...new Set(artistName)];
+                    }
+
+                    console.log(artistName.length);
+                    var data = [];
+                    for(var i = 0; i < artistName.length; i++) {
+                        console.log("Percentage done: " + ((i * 1.0 / artistName.length) * 100));
+                        var a = artistName[i].split(";");
+                        
+                        await sleep(500);
+                        
+                        var albumIDs = getAlbumIDs(await getArtistsAlbums(a[0]));
+                        
+                        data.push(...await addAlbums(albumIDs));
+                    }
+
+                    console.log("data output: ");
+                    console.log(data);
+
+                    exportToCSV("songs.csv", data);
+                }
+
+                </script>
+
+                    <div class="hero">
+                        <div class="fullwidth-block testimonial-section">
+                            <div class="container">
+                                <fieldset>
+                                    <legend>Artist Input</legend>
+
+                                    <label type="text">Artist to Search for Related Artists: </label>
+                                    <input type="text" id="artistSearch"> <br>
+                                    
+                                    <button type="submit" id="artistSearchButton">Search for Songs</button> 
+                                </fieldset>
+
+                                <fieldset>
+                                    <legend>Artist Results</legend>
+                                    <table id="searchResults">
+                                        <tr>
+                                            <th>Artist Name</th>
+                                            <th>Genre Name</th>
+                                            <th>Artist Art/Spotify Link</th>
+                                        </tr>
+                                    </table>
+                                </fieldset>
+                            </div>
+                    </div>
+                <br>
+                <br>
+        </div>
+    </body>
+</html>

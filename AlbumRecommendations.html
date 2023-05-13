@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Music Recommendation Website</title>
+        <head>
+            <title>Music Recommendation Website</title>
+            <meta charset="utf-8">
+            <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+            <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+    
+            <link href="http://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,700,900" rel="stylesheet" type="text/css">
+            <!-- Loading main css file -->
+            <link rel="stylesheet" href="style.css">
+            
+            <meta http-equiv="X-UA-Compatible" content="IE=edge">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0,maximum-scale=1">
+    
+        </head>
+        
+        <body>
+            <div id="site-content">
+                <header class="site-header">
+                    <nav class="main-navigation">
+                        <ul class="menu">            
+                            <li class="menu-item"><a href="index.html">Home</a></li>
+                            <li class="menu-item current-menu-item"><a href="AlbumRecommendations.html">Albums</a></li>
+                            <li class="menu-item"><a href="SongRecommendations.html">Songs</a></li>
+                            <li class="menu-item"><a href="ArtistRecommendations.html">Artists</a></li>
+                            <li class="menu-item"><a href="Playlists.html">Playlists</a></li>
+                        </ul>
+                    </nav>
+                </header>
+            </div>
+
+        <div class="container">
+            <fieldset>
+                <legend>Album Input</legend>
+
+                <label type="text">Get ALL Albums from Artist Name: </label>
+                <input type="text" id="addAlbumArtistName">
+                <br>
+
+                <button type="submit" id="AddAlbumsButton">Enter album into list</button>
+                <br>
+                <button type="submit" id="submitAlbumsButton">Submit albums</button>
+            </fieldset>
+
+            <fieldset>
+                <legend>Album Results</legend>
+                <table id="albumResults">
+                    <tr>
+                        <th>Artist Name</th>
+                        <th>Album Name</th>
+                        <th>Album Art/Spotify Link</th>
+                    </tr>
+                </table>
+            </fieldset>
+
+            <script type="module">
+                import {getArtistsAlbums, getAlbumTracks, addAlbums, getAlbumIDs} from './Javascript/AlbumCalls.js';
+                import {findArtistGenre} from './Javascript/GenreCalls.js';
+                import {getSongID, searchDatabaseForSong, getSongDetails} from './Javascript/SongCalls.js';
+                import { exportToCSV } from "./Javascript/MainCalls.js";
+
+                document.querySelector('#AddAlbumsButton').addEventListener('click', () => {
+                    addAlbumToArray(document.getElementById('addAlbumArtistName').value);
+                });
+                document.querySelector('#submitAlbumsButton').addEventListener('click', () => {
+                    addAlbum();
+                });
+
+                var albumNames = [];
+
+                export function addAlbumToArray(artistName) {
+                    albumNames.push(artistName);
+
+                    console.log(albumNames);
+                }
+
+                async function sleep(ms) {
+                    return new Promise(resolve => setTimeout(resolve, ms));
+                }
+
+                export async function addAlbum() {
+                    var i, j, addAlbumURL = "";
+                    console.log(albumNames.length);
+                    var table = document.querySelector("#albumResults tbody");
+                    var data = [];
+                    for(i = 0; i < albumNames.length; i++) {
+                        await sleep(1000);
+                        
+                        var albumData = await getArtistsAlbums(albumNames[i]);
+                        const albumIDResult = getAlbumIDs(albumData);
+
+                        albumData = albumData['albums']['items'];
+                        console.log(albumData);
+
+                        await sleep(500);
+                        
+                        for(j = 0; j < albumData.length; j++) {
+                            table.innerHTML += "<tr><td>" + albumData[j]['artists'][0]['name'] + "</td><td>" + albumData[j]['name'] + "</td><td><a href=\"" + albumData[j]['external_urls']['spotify'] + "\"><img src=\"" + albumData[j]['images'][0]['url'] + "\" alt=\"album Art\"> </a></td></tr>";
+                        }
+
+                        data.push(...await addAlbums(albumIDResult));
+                    }
+                    
+                    console.log("data ouput:");
+                    console.log(data);
+
+                    exportToCSV("albums.csv", data);
+                    
+                    albumNames = [];
+                }
+            </script>
+            
+            
+        </div>
+            
+    </body>
+</html>
