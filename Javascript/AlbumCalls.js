@@ -92,8 +92,6 @@ export async function addAlbums(albumIDs) {
     else
         arr.push(addAlbumURL);
 
-    console.log(arr);
-
     var cnt = 0;
     for(var a of arr) {
         await sleep(500);
@@ -104,7 +102,6 @@ export async function addAlbums(albumIDs) {
             continue;
 
         const addAlbumData = await getAlbumTracks(a);
-        console.log(addAlbumData);
         
         for(var i = 0; i < addAlbumData['albums'].length; i++) {
             console.log("Progress through tracks: " + (1.0 * i / addAlbumData['albums'].length * 100));
@@ -127,7 +124,6 @@ export async function addAlbums(albumIDs) {
                     await sleep(500);
                     
                     var details = await getMultipleSongDetails(songIDs, songNames, artistNames, genreNames);
-                    console.log(details);
 
                     for(var k = 0; k < details.length; k++) {
                         if(details[k] === null) continue;
@@ -148,7 +144,6 @@ export async function addAlbums(albumIDs) {
 
         if(songIDs.length > 0) {
             var details = await getMultipleSongDetails(songIDs.substring(0, songIDs.length - 1), songNames, artistNames, genreNames);
-            console.log(details);
 
             for(var k = 0; k < details.length; k++) {
                 if(details[k] === null) continue;
